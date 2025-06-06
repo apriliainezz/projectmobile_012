@@ -52,76 +52,79 @@ class _LoginPageState extends State<LoginPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: primaryColor.withOpacity(0.3),
-      body: Center(
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 400),
-          margin: const EdgeInsets.symmetric(horizontal: 24),
-          padding: const EdgeInsets.all(32),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            gradient: LinearGradient(
-              colors: [
-                Colors.white.withOpacity(0.9),
-                Colors.blue[50]!.withOpacity(0.6),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            border: Border.all(color: Colors.white.withOpacity(0.4), width: 1),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.blueGrey.withOpacity(0.1),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.lock_outline, size: 48, color: Colors.blueGrey[400]),
-              const SizedBox(height: 16),
-              Text(
-                "Selamat Datang 👋",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blueGrey[800],
-                ),
-              ),
-              const SizedBox(height: 32),
-              // Tab Bar
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: TabBar(
-                  controller: _tabController,
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  indicator: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    color: Colors.lightBlueAccent,
-                  ),
-                  labelColor: Colors.white,
-                  unselectedLabelColor: Colors.blueGrey[600],
-                  tabs: const [Tab(text: "Login"), Tab(text: "Register")],
-                ),
-              ),
-              const SizedBox(height: 24),
-              // Tab Bar View
-              SizedBox(
-                height: 300,
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [_buildLoginForm(), _buildRegisterForm()],
-                ),
-              ),
-            ],
-          ),
+      body: SingleChildScrollView(
+  padding: const EdgeInsets.symmetric(vertical: 40),
+  child: Center(
+    child: Container(
+      constraints: const BoxConstraints(maxWidth: 400),
+      margin: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        gradient: LinearGradient(
+          colors: [
+            Colors.white.withOpacity(0.9),
+            Colors.blue[50]!.withOpacity(0.6),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        border: Border.all(color: Colors.white.withOpacity(0.4), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.blueGrey.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.lock_outline, size: 48, color: Colors.blueGrey[400]),
+          const SizedBox(height: 16),
+          Text(
+            "Selamat Datang 👋",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Colors.blueGrey[800],
+            ),
+          ),
+          const SizedBox(height: 32),
+          // Tab Bar
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: TabBar(
+              controller: _tabController,
+              indicatorSize: TabBarIndicatorSize.tab,
+              indicator: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                color: Colors.lightBlueAccent,
+              ),
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.blueGrey[600],
+              tabs: const [Tab(text: "Login"), Tab(text: "Register")],
+            ),
+          ),
+          const SizedBox(height: 24),
+          // Tab Bar View
+          SizedBox(
+            height: 320,
+            child: TabBarView(
+              controller: _tabController,
+              children: [_buildLoginForm(), _buildRegisterForm()],
+            ),
+          ),
+        ],
+      ),
+    ),
+  ),
+),
     );
   }
 
