@@ -161,70 +161,79 @@ class _HomePageState extends State<HomePage> {
             ),
            child: Column(
   crossAxisAlignment: CrossAxisAlignment.stretch,
-  mainAxisSize: MainAxisSize.min,
   children: [
     ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+      borderRadius: const BorderRadius.vertical(
+        top: Radius.circular(16),
+      ),
       child: Image.network(
         kdramaItem.imgUrl ?? '',
         height: 140,
         fit: BoxFit.cover,
       ),
     ),
-    Padding(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            kdramaItem.title ?? '',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text("${kdramaItem.year ?? ''}"),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              const Icon(Icons.star, color: Colors.amber, size: 16),
-              const SizedBox(width: 4),
-              Text("${kdramaItem.rating ?? '-'}"),
-            ],
-          ),
-          const SizedBox(height: 8),
-          ElevatedButton.icon(
-            icon: Icon(
-              isLoved ? Icons.favorite : Icons.favorite_border,
-              size: 18,
-              color: isLoved ? Colors.white : Colors.pinkAccent,
-            ),
-            label: Text(
-              "Suka",
-              style: TextStyle(
-                color: isLoved ? Colors.white : Colors.pinkAccent,
+    Expanded(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              kdramaItem.title ?? '',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
               ),
             ),
-            onPressed: () {
-              if (kdramaItem.id != null) {
-                _handleSuka(kdramaItem);
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor:
-                  isLoved ? Colors.pinkAccent : Colors.white,
-              side: isLoved
-                  ? const BorderSide(color: Colors.pinkAccent)
-                  : null,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 6),
+            const SizedBox(height: 4),
+            Text("${kdramaItem.year ?? ''}"),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                const Icon(Icons.star, color: Colors.amber, size: 16),
+                const SizedBox(width: 4),
+                Text("${kdramaItem.rating ?? '-'}"),
+              ],
             ),
-          ),
-        ],
+            const Spacer(), // mendorong tombol ke bawah
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    icon: Icon(
+                      isLoved ? Icons.favorite : Icons.favorite_border,
+                      size: 18,
+                      color: isLoved ? Colors.white : Colors.pinkAccent,
+                    ),
+                    label: Text(
+                      "Suka",
+                      style: TextStyle(
+                        color:
+                            isLoved ? Colors.white : Colors.pinkAccent,
+                      ),
+                    ),
+                    onPressed: () {
+                      if (kdramaItem.id != null) {
+                        _handleSuka(kdramaItem);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          isLoved ? Colors.pinkAccent : Colors.white,
+                      side: isLoved
+                          ? const BorderSide(color: Colors.pinkAccent)
+                          : null,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     ),
   ],
