@@ -114,9 +114,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _kdramaGrid(BuildContext context, List<Kdrama> kdrama) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-    child: GridView.builder(
+    return GridView.builder(
+      padding: const EdgeInsets.only(bottom: 8),
       itemCount: kdrama.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
@@ -243,7 +242,6 @@ class _HomePageState extends State<HomePage> {
           ),
         );
       },
-    ),
     );
   }
 
