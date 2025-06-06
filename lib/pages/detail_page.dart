@@ -1,12 +1,46 @@
+import 'package:responsiah/database/database_helper.dart';
 import 'package:responsiah/models/movie_model.dart';
 import 'package:responsiah/services/movie_service.dart';
+import 'package:responsiah/pages/edit_page.dart';
+import 'package:responsiah/pages/rental_page.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:responsiah/services/session_service.dart'; // Import SessionService
 
-class DetailPage extends StatelessWidget {
+class DetailPage extends StatefulWidget {
   final int id;
 
   const DetailPage({super.key, required this.id});
+
+  @override
+  State<DetailPage> createState() => _DetailPageState();
+}
+
+class _DetailPageState extends State<DetailPage> {
+  bool _isRented = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkRentalStatus();
+  }
+
+  @override
+  void dispose() {
+    // Cancel any pending futures or state updates
+    _isRented = false;
+    // Always call super.dispose() last
+    super.dispose();
+  }
+
+  void _checkRentalStatus() {
+    final currentUserId = SessionService.currentUserId ?? 'guest';
+    final movieIdString = widget.id.toString();
+
+    setState(() {
+      _isRented = DatabaseHelper.isMovieRented(currentUserId, movieIdString);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,17 +51,14 @@ class DetailPage extends StatelessWidget {
         elevation: 3,
         centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: _kdramaDetail(),
-      ),
+      body: Padding(padding: const EdgeInsets.all(20), child: _kdramaDetail()),
       backgroundColor: const Color(0xFFF6F7FB), // latar belakang soft
     );
   }
 
   Widget _kdramaDetail() {
     return FutureBuilder(
-      future: KdramaService.getKdramaById(id),
+      future: KdramaService.getKdramaById(widget.id),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Center(
@@ -106,31 +137,126 @@ class DetailPage extends StatelessWidget {
               textAlign: TextAlign.justify,
             ),
             const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                onPressed: () async {
-                  final uri = Uri.parse(kdrama.movieUrl!);
-                  if (await canLaunchUrl(uri)) {
-                    await launchUrl(uri);
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF92C7FF), // pastel blue
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+
+            // Action buttons
+            Column(
+              children: [
+                // Rental button (full width)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isRented
+                        ? null // Disable the button if rented
+                        : () async {
+                            await Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => RentalPage(movie: kdrama),
+                              ),
+                            );
+                            // Refresh rental status when returning from rental page
+                            _checkRentalStatus();
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _isRented
+                          ? Colors.grey // Change color to grey if rented
+                          : const Color(0xFF27AE60),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 4,
+                      shadowColor: Colors.green.shade200,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.movie, size: 20),
+                        SizedBox(width: 8),
+                        Text(
+                          _isRented
+                              ? "Anda Sudah Menyewa"
+                              : "Sewa Film - Rp 10.000/6 jam",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  elevation: 4,
-                  shadowColor: Colors.blue.shade200,
                 ),
-                child: const Text(
-                  "Korean Drama Website",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                const SizedBox(height: 12),
+
+                // Other action buttons
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final uri = Uri.parse(kdrama.movieUrl!);
+                          if (await canLaunchUrl(uri)) {
+                            await launchUrl(uri);
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF92C7FF),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 4,
+                          shadowColor: Colors.blue.shade200,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: const Text(
+                          "Visit Website",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    ElevatedButton(
+                      onPressed: _showEditDialog,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange[400],
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 4,
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                          horizontal: 16,
+                        ),
+                      ),
+                      child: const Icon(Icons.edit),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: _showDeleteDialog,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red[400],
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 4,
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                          horizontal: 16,
+                        ),
+                      ),
+                      child: const Icon(Icons.delete),
+                    ),
+                  ],
                 ),
-              ),
-            )
+              ],
+            ),
           ],
         ),
       ),
@@ -160,5 +286,101 @@ class DetailPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _showEditDialog() {
+    // Navigate to edit page instead of showing dialog
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => EditPage(id: widget.id)));
+  }
+
+  void _showDeleteDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.warning, color: Colors.red),
+              SizedBox(width: 8),
+              Text('Hapus Korean Drama'),
+            ],
+          ),
+          content: const Text(
+            'Apakah Anda yakin ingin menghapus drama ini?\n\nTindakan ini tidak dapat dibatalkan.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _deleteKdrama();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red[400],
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Hapus'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _deleteKdrama() async {
+    try {
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return const Center(child: CircularProgressIndicator());
+        },
+      );
+
+      // Call actual delete API
+      final response = await KdramaService.deleteKdrama(widget.id);
+
+      // Close loading dialog
+      Navigator.of(context).pop();
+
+      // Check if deletion was successful
+      if (response["status"] == "Success") {
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Korean Drama berhasil dihapus!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Go back to previous page (home page)
+        Navigator.of(context).pop();
+      } else {
+        // Handle API error response
+        throw Exception(response["message"] ?? "Gagal menghapus drama");
+      }
+    } catch (e) {
+      // Close loading dialog if still open
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal menghapus drama: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }

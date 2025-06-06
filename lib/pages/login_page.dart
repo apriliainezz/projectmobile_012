@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:responsiah/pages/home_page.dart';
-
+import 'package:responsiah/pages/main_navigation.dart';
+import 'package:responsiah/services/session_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -10,13 +11,42 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
-  final TextEditingController _username = TextEditingController();
-  final TextEditingController _password = TextEditingController();
-  bool _obscurePassword = true;
-  bool isError = false;
+class _LoginPageState extends State<LoginPage>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  // Login form controllers
+  final TextEditingController _loginUsername = TextEditingController();
+  final TextEditingController _loginPassword = TextEditingController();
+
+  // Register form controllers
+  final TextEditingController _registerUsername = TextEditingController();
+  final TextEditingController _registerPassword = TextEditingController();
+  final TextEditingController _confirmPassword = TextEditingController();
+
+  bool _obscureLoginPassword = true;
+  bool _obscureRegisterPassword = true;
+  bool _obscureConfirmPassword = true;
+  bool _isLoading = false;
 
   final Color primaryColor = const Color(0xFFAEDFF7); // pastel blue
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _loginUsername.dispose();
+    _loginPassword.dispose();
+    _registerUsername.dispose();
+    _registerPassword.dispose();
+    _confirmPassword.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,68 +90,32 @@ class _LoginPageState extends State<LoginPage> {
                   color: Colors.blueGrey[800],
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                "Silakan login untuk melanjutkan",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.blueGrey[600],
-                ),
-              ),
               const SizedBox(height: 32),
-              TextField(
-                controller: _username,
-                decoration: InputDecoration(
-                  labelText: "NIM",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
-                  prefixIcon: const Icon(Icons.person),
+              // Tab Bar
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(16),
                 ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _password,
-                obscureText: _obscurePassword,
-                decoration: InputDecoration(
-                  labelText: "Password",
-                  border: OutlineInputBorder(
+                child: TabBar(
+                  controller: _tabController,
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  indicator: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
+                    color: Colors.lightBlueAccent,
                   ),
-                  filled: true,
-                  fillColor: Colors.white,
-                  prefixIcon: const Icon(Icons.lock),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
-                    },
-                  ),
+                  labelColor: Colors.white,
+                  unselectedLabelColor: Colors.blueGrey[600],
+                  tabs: const [Tab(text: "Login"), Tab(text: "Register")],
                 ),
               ),
               const SizedBox(height: 24),
+              // Tab Bar View
               SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.lightBlueAccent,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  onPressed: _handleLogin,
-                  child: const Text(
-                    "Login",
-                    style: TextStyle(fontSize: 16, color: Colors.white),
-                  ),
+                height: 300,
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [_buildLoginForm(), _buildRegisterForm()],
                 ),
               ),
             ],
@@ -131,41 +125,242 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  void _handleLogin() async {
-    String nim = _username.text.trim();
-    String password = _password.text;
+  Widget _buildLoginForm() {
+    return Column(
+      children: [
+        TextField(
+          controller: _loginUsername,
+          decoration: InputDecoration(
+            labelText: "Username",
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+            filled: true,
+            fillColor: Colors.white,
+            prefixIcon: const Icon(Icons.person),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _loginPassword,
+          obscureText: _obscureLoginPassword,
+          decoration: InputDecoration(
+            labelText: "Password",
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+            filled: true,
+            fillColor: Colors.white,
+            prefixIcon: const Icon(Icons.lock),
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscureLoginPassword ? Icons.visibility_off : Icons.visibility,
+              ),
+              onPressed: () {
+                setState(() {
+                  _obscureLoginPassword = !_obscureLoginPassword;
+                });
+              },
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.lightBlueAccent,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            onPressed: _isLoading ? null : _handleLogin,
+            child:
+                _isLoading
+                    ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                    : const Text(
+                      "Login",
+                      style: TextStyle(fontSize: 16, color: Colors.white),
+                    ),
+          ),
+        ),
+      ],
+    );
+  }
 
-    if (nim.isEmpty || password.isEmpty) {
+  Widget _buildRegisterForm() {
+    return Column(
+      children: [
+        TextField(
+          controller: _registerUsername,
+          decoration: InputDecoration(
+            labelText: "Username",
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+            filled: true,
+            fillColor: Colors.white,
+            prefixIcon: const Icon(Icons.person),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _registerPassword,
+          obscureText: _obscureRegisterPassword,
+          decoration: InputDecoration(
+            labelText: "Password",
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+            filled: true,
+            fillColor: Colors.white,
+            prefixIcon: const Icon(Icons.lock),
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscureRegisterPassword
+                    ? Icons.visibility_off
+                    : Icons.visibility,
+              ),
+              onPressed: () {
+                setState(() {
+                  _obscureRegisterPassword = !_obscureRegisterPassword;
+                });
+              },
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _confirmPassword,
+          obscureText: _obscureConfirmPassword,
+          decoration: InputDecoration(
+            labelText: "Konfirmasi Password",
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+            filled: true,
+            fillColor: Colors.white,
+            prefixIcon: const Icon(Icons.lock_outline),
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscureConfirmPassword
+                    ? Icons.visibility_off
+                    : Icons.visibility,
+              ),
+              onPressed: () {
+                setState(() {
+                  _obscureConfirmPassword = !_obscureConfirmPassword;
+                });
+              },
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.lightBlueAccent,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            onPressed: _isLoading ? null : _handleRegister,
+            child:
+                _isLoading
+                    ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                    : const Text(
+                      "Daftar",
+                      style: TextStyle(fontSize: 16, color: Colors.white),
+                    ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _handleLogin() async {
+    String username = _loginUsername.text.trim();
+    String password = _loginPassword.text;
+
+    if (username.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("NIM dan password wajib diisi.")),
+        const SnackBar(content: Text("Username dan password wajib diisi.")),
       );
       return;
     }
 
-    if (nim == "123220012" && password == "12345678") {
-      setState(() {
-        isError = false;
-      });
+    setState(() {
+      _isLoading = true;
+    });
 
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('isLoggedIn', true);
-      await prefs.setString('nim', nim);
+    final result = await SessionService.login(username, password);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Login berhasil")),
-      );
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (result.success) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result.message)));
 
       await Future.delayed(const Duration(milliseconds: 500));
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const HomePage()),
-      );
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const MainNavigation()),
+        );
+      }
     } else {
-      setState(() {
-        isError = true;
-      });
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result.message)));
+    }
+  }
+
+  void _handleRegister() async {
+    String username = _registerUsername.text.trim();
+    String password = _registerPassword.text;
+    String confirmPassword = _confirmPassword.text;
+
+    if (username.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Semua field wajib diisi.")));
+      return;
+    }
+
+    if (password != confirmPassword) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("NIM atau password salah")),
+        const SnackBar(
+          content: Text("Password dan konfirmasi password tidak sama."),
+        ),
       );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    final result = await SessionService.registerToDatabase(username, password);
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(result.message)));
+
+    if (result.success) {
+      _tabController.animateTo(0);
     }
   }
 }

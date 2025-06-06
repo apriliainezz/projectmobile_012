@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:responsiah/models/movie_model.dart';
 import 'package:responsiah/pages/create_page.dart';
 import 'package:responsiah/pages/detail_page.dart';
-import 'package:responsiah/pages/edit_page.dart';
-import 'package:responsiah/pages/login_page.dart';
+import 'package:responsiah/pages/rental_page.dart';
 import 'package:responsiah/services/movie_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:responsiah/services/session_service.dart';
+import 'package:responsiah/database/database_helper.dart'; // Import DatabaseHelper
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -15,43 +15,40 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  String? nim;
+  bool _isReloading = false;
 
   final Color primaryColor = const Color(0xFFAEDFF7); // pastel blue
 
   @override
   void initState() {
     super.initState();
-    _loadNim();
-  }
-
-  Future<void> _loadNim() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      nim = prefs.getString('nim') ?? 'Pengguna';
-    });
-  }
-
-  Future<void> _logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const LoginPage()),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final fullName = SessionService.currentFullName ?? 'Pengguna';
+
     return Scaffold(
+      key: const PageStorageKey<String>('HomePage'), // Add PageStorageKey
       backgroundColor: primaryColor.withOpacity(0.2),
       appBar: AppBar(
         backgroundColor: primaryColor,
-        title: Text("Halo, ${nim ?? '...'}"),
+        title: Text("Halo, $fullName"),
+        automaticallyImplyLeading: false, // Remove back button
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: "Logout",
-            onPressed: _logout,
+            onPressed: _isReloading ? null : _reloadData,
+            icon: _isReloading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Icon(Icons.refresh),
+            tooltip: 'Reload',
           ),
         ],
       ),
@@ -63,10 +60,36 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: Colors.lightBlueAccent,
         child: const Icon(Icons.add),
         onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const CreatePage()),
-          );
+          Navigator.of(context)
+              .push(MaterialPageRoute(builder: (_) => const CreatePage()))
+              .then((_) {
+            // Refresh data when returning from CreatePage
+            setState(() {});
+          });
         },
+      ),
+    );
+  }
+
+  void _reloadData() async {
+    setState(() {
+      _isReloading = true;
+    });
+
+    // Add a small delay to show the loading indicator
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    if (!mounted) return; // Add this check
+
+    setState(() {
+      _isReloading = false;
+    });
+
+    // Show success message
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Data berhasil dimuat ulang!'),
+        duration: Duration(seconds: 2),
       ),
     );
   }
@@ -79,7 +102,10 @@ class _HomePageState extends State<HomePage> {
           return Text("Error: ${snapshot.error.toString()}");
         } else if (snapshot.hasData) {
           KdramaModel response = KdramaModel.fromJson(snapshot.data!);
-          return _kdramaGrid(context, response.data!);
+          // Sort movies by ID in descending order (highest to lowest)
+          List<Kdrama> sortedMovies = response.data!
+            ..sort((a, b) => (b.id ?? 0).compareTo(a.id ?? 0));
+          return _kdramaGrid(context, sortedMovies);
         } else {
           return const Center(child: CircularProgressIndicator());
         }
@@ -94,17 +120,31 @@ class _HomePageState extends State<HomePage> {
         crossAxisCount: 2,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: 0.75,
+        childAspectRatio: 0.65, // Increased height to prevent overflow
       ),
       itemBuilder: (context, index) {
         final kdramaItem = kdrama[index];
+        final String currentUserId = SessionService.currentUserId ?? "";
+        // Ensure kdramaItem.id is not null before converting to string
+        final String movieIdString = kdramaItem.id?.toString() ?? "";
+
+        bool isLoved = false;
+        if (currentUserId.isNotEmpty && movieIdString.isNotEmpty) {
+          isLoved = DatabaseHelper.isMovieLoved(currentUserId, movieIdString);
+        }
+
         return InkWell(
           onTap: () {
-            Navigator.of(context).push(
+            Navigator.of(context)
+                .push(
               MaterialPageRoute(
                 builder: (_) => DetailPage(id: kdramaItem.id!),
               ),
-            );
+            )
+                .then((_) {
+              // Refresh data when returning from DetailPage in case of changes
+              setState(() {});
+            });
           },
           child: Container(
             decoration: BoxDecoration(
@@ -122,7 +162,9 @@ class _HomePageState extends State<HomePage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
+                  ),
                   child: Image.network(
                     kdramaItem.imgUrl ?? '',
                     height: 140,
@@ -157,57 +199,49 @@ class _HomePageState extends State<HomePage> {
                       Row(
                         children: [
                           Expanded(
-                            child: ElevatedButton(
+                            child: ElevatedButton.icon(
+                              icon: Icon(
+                                isLoved
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                size: 18,
+                                color:
+                                    isLoved ? Colors.white : Colors.pinkAccent,
+                              ),
+                              label: Text(
+                                "Suka",
+                                style: TextStyle(
+                                  color: isLoved
+                                      ? Colors.white
+                                      : Colors.pinkAccent,
+                                ),
+                              ),
                               onPressed: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(builder: (_) => EditPage(id: kdramaItem.id!)),
-                                );
+                                if (kdramaItem.id != null) {
+                                  _handleSuka(kdramaItem); // Pass kdramaItem
+                                }
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue[300],
-                                padding: const EdgeInsets.symmetric(vertical: 6),
+                                backgroundColor:
+                                    isLoved ? Colors.pinkAccent : Colors.white,
+                                side: isLoved
+                                    ? const BorderSide(
+                                        color: Colors.pinkAccent,
+                                      )
+                                    : null,
+                                foregroundColor:
+                                    Colors.white, // Default text color
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 6,
+                                ),
                               ),
-                              child: const Text("Edit"),
                             ),
                           ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: ElevatedButton(
-    onPressed: () async {
-      final confirm = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text("Konfirmasi"),
-          content: const Text("Yakin ingin menghapus drama ini?"),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text("Batal"),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text("Hapus"),
-            ),
-          ],
-        ),
-      );
-
-      if (confirm == true) {
-        _delete(kdramaItem.id!);
-      }
-    },
-    style: ElevatedButton.styleFrom(
-      backgroundColor: Colors.redAccent,
-      padding: const EdgeInsets.symmetric(vertical: 6),
-    ),
-    child: const Text("Delete"),
-  ),
-                          ),
                         ],
-                      )
+                      ),
                     ],
                   ),
-                )
+                ),
               ],
             ),
           ),
@@ -216,20 +250,67 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _delete(int id) async {
-    try {
-      final response = await KdramaService.deleteKdrama(id);
-      if (response["status"] == "Success") {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Korean Drama Removed")),
-        );
-        setState(() {});
-      } else {
-        throw Exception(response["message"]);
-      }
-    } catch (error) {
+  void _handleSewa(Kdrama movie) async {
+    final userId = SessionService.currentUserId;
+    if (userId == null || userId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Gagal: $error")),
+        const SnackBar(content: Text("Harap login untuk menyewa film.")),
+      );
+      return;
+    }
+
+    // Navigate to rental page
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (context) => RentalPage(movie: movie)))
+        .then((_) {
+      // Refresh data when returning from rental page
+      setState(() {});
+    });
+  }
+
+  void _handleSuka(Kdrama kdramaItem) async {
+    // Accept kdramaItem
+    final userId = SessionService.currentUserId;
+    final movieId = kdramaItem.id?.toString() ?? "";
+    if (userId == null || userId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Harap login untuk menyukai film.")),
+      );
+      return;
+    }
+
+    bool isCurrentlyLoved = DatabaseHelper.isMovieLoved(userId, movieId);
+    bool success;
+
+    if (isCurrentlyLoved) {
+      success = await DatabaseHelper.removeMovieLove(userId, movieId);
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Film ID: $movieId dihapus dari favorit.")),
+        );
+      }
+    } else {
+      // Pass the movie title and image URL to addMovieLove
+      success = await DatabaseHelper.addMovieLove(
+        userId,
+        movieId,
+        kdramaItem.title ?? 'Unknown Title',
+        kdramaItem.imgUrl ?? '',
+      );
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Film ID: $movieId ditambahkan ke favorit.")),
+        );
+      }
+    }
+
+    if (success) {
+      setState(() {
+        // This will trigger a rebuild of the grid, updating the button's appearance
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Gagal memperbarui status suka.")),
       );
     }
   }
