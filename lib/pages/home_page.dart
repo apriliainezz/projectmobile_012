@@ -121,7 +121,7 @@ class _HomePageState extends State<HomePage> {
         crossAxisCount: 2,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: 0.68, // Increased height to prevent overflow
+        childAspectRatio: 0.64, // Increased height to prevent overflow
       ),
       itemBuilder: (context, index) {
         final kdramaItem = kdrama[index];
