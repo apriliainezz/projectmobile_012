@@ -34,7 +34,7 @@ class _LovePageState extends State<LovePage> {
     return Scaffold(
       backgroundColor: primaryColor.withOpacity(0.1),
       appBar: AppBar(
-        title: const Text('Film Favorit'),
+        title: const Text('Drama Korea Favorit'),
         backgroundColor: primaryColor,
         elevation: 0,
         automaticallyImplyLeading: false,
@@ -51,12 +51,12 @@ class _LovePageState extends State<LovePage> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Belum ada film favorit',
+                    'Belum ada drama korea favorite',
                     style: TextStyle(fontSize: 18, color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Mulai tambahkan film ke favorit!',
+                    'Mulai tambahkan drama korea ke favorite!',
                     style: TextStyle(fontSize: 14, color: Colors.grey[500]),
                   ),
                 ],

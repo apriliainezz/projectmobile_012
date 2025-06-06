@@ -133,7 +133,7 @@ class _SearchPageState extends State<SearchPage> {
     return Scaffold(
       backgroundColor: primaryColor.withOpacity(0.1),
       appBar: AppBar(
-        title: const Text('Cari Film'),
+        title: const Text('Cari Film Drama Korea'),
         backgroundColor: primaryColor,
         elevation: 0,
         automaticallyImplyLeading: false,
