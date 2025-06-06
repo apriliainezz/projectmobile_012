@@ -663,7 +663,7 @@ class _CinemaMapPageState extends State<CinemaMapPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Tempat Nonton Terdekat"),
+        title: const Text("Bioskop Terdekat"),
         backgroundColor: const Color(0xFFAEDFF7),
         elevation: 0,
       ),

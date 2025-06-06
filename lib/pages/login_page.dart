@@ -57,7 +57,7 @@ class _LoginPageState extends State<LoginPage>
   child: Center(
     child: Container(
       constraints: const BoxConstraints(maxWidth: 400),
-      margin: const EdgeInsets.symmetric(horizontal: 24),
+      margin: const EdgeInsets.only(top: 80, left: 24, right: 24),
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
@@ -120,6 +120,11 @@ class _LoginPageState extends State<LoginPage>
               children: [_buildLoginForm(), _buildRegisterForm()],
             ),
           ),
+          const SizedBox(height: 40),
+          Text(
+        "© 2025 KoreanDramaIncez",
+        style: TextStyle(color: Colors.blueGrey[600], fontSize: 12),
+      ),
         ],
       ),
     ),

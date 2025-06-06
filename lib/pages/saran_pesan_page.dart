@@ -8,7 +8,7 @@ class SaranPesanPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('Saran dan Pesan'),
+        title: const Text('Saran dan Kesan'),
         backgroundColor: const Color(0xFFAEDFF7),
         elevation: 0,
       ),
@@ -85,10 +85,10 @@ class SaranPesanPage extends StatelessWidget {
 
             // Kesan
             _buildSectionCard(
-              title: 'Kesan',
+              title: 'Saran',
               content:
-                  '1. Pemrograman aplikasi mobile sangat menantang dan membutuhkan ketelitian.\n'
-                  '2. Tugas yang diberikan cukup menantang.',
+                  '1. Diharapkan ada lebih banyak contoh praktis dan latihan di setiap pertemuan.\n'
+                  '2. Tambahan sesi konsultasi atau asistensi dapat membantu saat mengalami kendala coding.',
             ),
 
             const SizedBox(height: 16),
@@ -98,8 +98,8 @@ class SaranPesanPage extends StatelessWidget {
               title: 'Pesan',
               content:
                   '1. Terima kasih atas bimbingan dan ilmu yang telah diberikan.\n'
-                  '2. Semoga Bapak/Ibu dosen selalu diberikan kesehatan dan keberkahan.\n'
-                  '3. Sukses selalu untuk karir dan pendidikan Bapak/Ibu dosen.',
+                  '2. Semoga materi yang telah diajarkan bisa menjadi bekal dalam dunia kerja nanti.\n'
+                  '3. Sukses selalu dan sehat selalu untuk Bapak/Ibu dosen.',
             ),
 
             const SizedBox(height: 16),
@@ -119,12 +119,12 @@ class SaranPesanPage extends StatelessWidget {
                     const SizedBox(height: 10),
                     const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
+                      children: const [
                         Icon(Icons.star, color: Colors.amber),
                         Icon(Icons.star, color: Colors.amber),
                         Icon(Icons.star, color: Colors.amber),
                         Icon(Icons.star, color: Colors.amber),
-                        Icon(Icons.star_border, color: Colors.amber),
+                        Icon(Icons.star_half, color: Colors.amber),
                       ],
                     ),
                   ],

@@ -269,7 +269,7 @@ class _ProfilePageState extends State<ProfilePage> {
             // Menu Items
             _buildMenuItem(
               icon: Icons.movie_outlined,
-              title: 'Film yang Disewa',
+              title: 'Drama Korea yang Disewa',
               subtitle: 'Lihat riwayat penyewaan',
               onTap: () {
                 Navigator.push(
@@ -282,7 +282,7 @@ class _ProfilePageState extends State<ProfilePage> {
             const SizedBox(height: 12),
             _buildMenuItem(
               icon: Icons.location_on_outlined,
-              title: 'Tempat Nonton Terdekat',
+              title: 'Rekomendasi Bioskop Terdekat',
               subtitle: 'Cari bioskop di sekitar Anda',
               onTap: () {
                 Navigator.push(
