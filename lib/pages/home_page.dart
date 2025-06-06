@@ -115,7 +115,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _kdramaGrid(BuildContext context, List<Kdrama> kdrama) {
     return GridView.builder(
-      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 80),
+      padding: const EdgeInsets.only(bottom: 8),
       itemCount: kdrama.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
