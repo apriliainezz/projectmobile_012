@@ -176,7 +176,7 @@ class _DetailPageState extends State<DetailPage> {
                         Text(
                           _isRented
                               ? "Anda Sudah Menyewa"
-                              : "Sewa Film - Rp 10.000/6 jam",
+                              : "Sewa Film - Rp 20.000/6 jam",
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
