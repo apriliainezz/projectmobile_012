@@ -94,7 +94,7 @@ class SaranPesanPage extends StatelessWidget {
             const SizedBox(height: 16),
 
             // Pesan
-            _buildSectionCard(
+            _buildSectionCard( 
               title: 'Pesan',
               content:
                   '1. Terima kasih atas bimbingan dan ilmu yang telah diberikan.\n'
